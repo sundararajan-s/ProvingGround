@@ -139,7 +139,8 @@ object Collections{
 
       private def gather[T](seq: Seq[Weighted[T]]) = Weighted(seq.head.elem, Weighted.sumWeigths(seq))
 
-      def flatten[T](seq: Seq[Weighted[T]]) = seq groupBy (_.elem) map (_._2) map (gather(_))
+      def flatten[T](seq: Seq[Weighted[T]]) = seq
+//        seq groupBy (_.elem) map (_._2) map (gather(_))
 
       def combine[T](seqs: Seq[Weighted[T]]*) = flatten(seqs.flatten)
     }
@@ -147,7 +148,7 @@ object Collections{
     implicit def weights[T](tws: (T, Double)*) = for (tw <- tws) yield Weighted(tw._1, tw._2)
 
 
-    
+
     case class InnerProduct[V](dot: (V, V) => Double)
 
     implicit class DotOp[V : InnerProduct](a : V){
