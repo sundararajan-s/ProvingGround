@@ -18,7 +18,11 @@ class NumericTyp[A : CRig] {
   
   import rig._
   
-  trait LocalTerm extends Term with Subs[LocalTerm]
+  trait LocalTerm extends Term with Subs[LocalTerm]{
+    def +(that: LocalTerm) = sum(this)(that)
+    
+    def *(that: LocalTerm) = sum(this)(that)
+  }
   
   type Op = Func[LocalTerm, Func[LocalTerm, LocalTerm]]
   
@@ -271,5 +275,13 @@ class NumericTyp[A : CRig] {
       case _ => PiTerm(Map(x -> 1, y -> 1))
     }
   }
-  
+   implicit val CrigStructure = new CRig[LocalTerm]{
+      val zero = Literal(rig.zero)
+      
+      val one = Literal(rig.one)
+      
+      def plus(x: LocalTerm, y: LocalTerm) = x + y
+      
+      def times(x: LocalTerm, y: LocalTerm) = x * y
+  }
 }

@@ -9,7 +9,19 @@ import ScalaRep._
 /**
  * @author gadgil
  */
-case class VecTyp[+U<: Term with Subs[U], X](basetyp: Typ[U], dim: Int)(implicit _baserep: ScalaRep[U, X]) extends SmallTyp{
+case class VecTyp[+U<: Term with Subs[U], X](basetyp: Typ[U], dim: Int)(implicit _baserep: ScalaRep[U, X]) extends 
+  Typ[RepTerm[Vector[X]]]{
+     val typ = Universe(0)
+
+    def symbObj(name: AnySym): RepTerm[Vector[X]] = RepSymbObj[Vector[X], RepTerm[Vector[X]]](name, this)
+
+    def newobj = this
+
+    def subs(x: Term, y: Term) = (x, y) match {
+      case (xt: Typ[_], yt: Typ[_]) if (xt == this) => yt.asInstanceOf[Typ[RepTerm[Vector[X]]]]
+      case _ => this
+    }
+  
     val baserep = _baserep
 }
 
