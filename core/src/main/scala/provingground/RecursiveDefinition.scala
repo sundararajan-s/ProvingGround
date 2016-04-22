@@ -37,8 +37,8 @@ trait RecursiveDefinition[C<: Term with Subs[C],  H<: Term with Subs[H]] {self =
   def prependPair(cons: Constructor[C, H])(arg: cons.pattern.RecDataType) : RecursiveDefinition[C, H] = {
     type D = cons.pattern.RecDataType
 
-    val caseFn : D => Func[H, C] => Func[H, C] => Func[H, C] =
-         (d) => (f) => (g) => cons.pattern.recModify(cons.cons)(d)(f)(g)
+    val caseFn : D => Func[H, C] => Func[H, C] =
+         (d) => (f) => cons.pattern.recModify(cons.cons)(d)(f)
 
     RecDefinitionCons(arg, caseFn, self)
   }
@@ -60,7 +60,7 @@ case class RecDefinitionTail[C<: Term with Subs[C],  H<: Term with Subs[H]](
 
 case class RecDefinitionCons[D<: Term with Subs[D], C <: Term with Subs[C],  H<: Term with Subs[H]](
     arg: D,
-    caseFn : D => Func[H, C] => Func[H, C] => Func[H, C],
+    caseFn : D => Func[H, C]  => Func[H, C],
     tail: RecursiveDefinition[C, H]) extends RecursiveDefinition[C, H]{
 
   lazy val W = tail.W
@@ -68,7 +68,7 @@ case class RecDefinitionCons[D<: Term with Subs[D], C <: Term with Subs[C],  H<:
   lazy val X = tail.X
 
   def recursion(f: => Func[H, C]) = {
-    def fn(x: H) = caseFn(arg)(f)(tail.recursion(f))(x)
+    def fn(x: H) = caseFn(arg)(f)(x)
     new FuncDefn(fn, W, X)
   }
 

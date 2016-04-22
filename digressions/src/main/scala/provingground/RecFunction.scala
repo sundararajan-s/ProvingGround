@@ -57,7 +57,7 @@ trait RecFunction[C<: Term with Subs[C], H <: Term with Subs[H]]{self =>
     val recdom = (x: Typ[C]) => cons.pattern.recDom(cons.W, x)
     type D = cons.pattern.RecDataType
     val caseFn : D => Func[H, C] => Func[H, C] => Func[H, C] =
-       (d) => (f) => (g) => cons.pattern.recModify(cons.cons)(d)(f)(g)
+       (d) => (f) => (g) => cons.pattern.recModify(cons.cons)(d)(f)
     RecFunctionCons[D, C, H](recdom, caseFn, self)
   }
 
@@ -68,7 +68,7 @@ trait RecFunction[C<: Term with Subs[C], H <: Term with Subs[H]]{self =>
 
 object RecFunction{
 
-  
+
 
   def recFunction[C <: Term with Subs[C], U <: Term with Subs[U], H <: Term with Subs[H]](
       conss: List[Constructor[C, H]], W: Typ[H]) = {

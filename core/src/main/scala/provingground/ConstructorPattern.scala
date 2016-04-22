@@ -83,7 +83,7 @@ sealed trait ConstructorPattern[Cod <: Term with Subs[Cod], CnstrctrType <: Term
 
   def recModify(cons: ConstructorType)(data: RecDataType)(
     f: => Func[H, Cod]
-  )(g: Func[H, Cod]): Func[H, Cod] = new Func[H, Cod] {
+  ): Func[H, Cod] = new Func[H, Cod] {
     lazy val dom = f.dom
 
     lazy val codom = f.codom
@@ -92,7 +92,7 @@ sealed trait ConstructorPattern[Cod <: Term with Subs[Cod], CnstrctrType <: Term
 
     def newobj = this
 
-    def act(a: H) = (recDef(cons, data, f)(a)).getOrElse(g(a))
+    def act(a: H) = (recDef(cons, data, f)(a)).getOrElse(f(a))
 
     def subs(x: Term, y: Term) = this
 
