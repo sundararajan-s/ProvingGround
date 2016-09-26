@@ -363,9 +363,11 @@ object HoTT {
     */
   def symSubs[U <: Term](symbobj: AnySym => U)(x: Term, y: Term): AnySym => U = {
     case fx: ApplnSym[w, u] =>
-      Try((fx.func
+      // Try(
+        (fx.func
             .replace(x, y))(fx.arg.replace(x, y).asInstanceOf[w])
-            .asInstanceOf[U]) getOrElse symbobj(fx)
+            .asInstanceOf[U]
+          // ) getOrElse symbobj(fx)
     case sym => symbobj(sym.subs(x, y))
   }
 
@@ -834,9 +836,9 @@ object HoTT {
     def act(arg: W): U
 
     def apply(arg: W): U = {
-      require(
-          arg.typ == dom,
-          s"function $this with domain ${dom} cannot act on term ${arg} with type ${arg.typ}")
+      // require(
+      //     arg.typ == dom,
+      //     s"function $this with domain ${dom} cannot act on term ${arg} with type ${arg.typ}")
       arg match {
         case t: Cnst => Try(apply(t.term.asInstanceOf[W])).getOrElse(act(arg))
         case _ => act(arg)
@@ -1283,10 +1285,11 @@ object HoTT {
     */
   def lambda[U <: Term with Subs[U], V <: Term with Subs[V]](variable: U)(
       value: V): FuncLike[U, V] = {
-    val newvar = variable.newobj
-    if (value.typ dependsOn variable)
-      Lambda(newvar, value.replace(variable, newvar))
-    else LambdaFixed(newvar, value.replace(variable, newvar))
+    // val newvar = variable.newobj
+    // if (value.typ dependsOn variable)
+    //   Lambda(newvar, value.replace(variable, newvar))
+    // else LambdaFixed(newvar, value.replace(variable, newvar))
+    LambdaFixed(variable, value)
   }
 
   def lambda[U <: Term with Subs[U], V <: Term with Subs[V]](
@@ -1302,10 +1305,10 @@ object HoTT {
 
   def lmbda[U <: Term with Subs[U], V <: Term with Subs[V]](
       variable: TypedTerm[U])(value: TypedTerm[V]): Func[U, V] = {
-    require(
-        value.typ.indepOf(variable.term),
-        s"lmbda returns function type but value $value has type ${value.typ} depending on variable $variable; you may wish to use lambda instead"
-    )
+    // require(
+    //     value.typ.indepOf(variable.term),
+    //     s"lmbda returns function type but value $value has type ${value.typ} depending on variable $variable; you may wish to use lambda instead"
+    // )
     val newvar = variable.term.newobj
     LambdaTypedFixed(variable.replace(variable.term, newvar),
                      value.replace(variable.term, newvar))
@@ -1323,13 +1326,14 @@ object HoTT {
     */
   def lmbda[U <: Term with Subs[U], V <: Term with Subs[V]](variable: U)(
       value: V): Func[U, V] = {
-    require(
-        value.typ.indepOf(variable),
-        s"lmbda returns function type but value $value has type ${value.typ} depending on variable $variable; you may wish to use lambda instead"
-    )
-    val newvar = variable.newobj
+    // require(
+    //     value.typ.indepOf(variable),
+    //     s"lmbda returns function type but value $value has type ${value.typ} depending on variable $variable; you may wish to use lambda instead"
+    // )
+    // val newvar = variable.newobj
 //    LambdaTypedFixed(newvar.typed, value.replace(variable, newvar).typed)
-    LambdaFixed(newvar, value.replace(variable, newvar))
+    // LambdaFixed(newvar, value.replace(variable, newvar))
+    LambdaFixed(variable, value)
   }
 
   def id[U <: Term with Subs[U]](typ: Typ[U]) = {
@@ -1805,8 +1809,8 @@ object HoTT {
   implicit class RichTerm[U <: Term with Subs[U]](term: U) {
 
     def =:=(rhs: U) = {
-      require(term.typ == rhs.typ,
-              "mismatched types for equality " + term.typ + " and " + rhs.typ)
+      // require(term.typ == rhs.typ,
+      //         "mismatched types for equality " + term.typ + " and " + rhs.typ)
       IdentityTyp(term.typ.asInstanceOf[Typ[U]], term, rhs)
     }
 
@@ -2203,7 +2207,8 @@ object HoTT {
   /** Helper for symbol factory */
   def usedChars(s: Traversable[Term]): Traversable[Char] = {
     def charOpt(obj: Term): Option[Char] = obj match {
-      case sym: Symbolic => Try(sym.name.asInstanceOf[Char]).toOption
+      case sym: Symbolic => Some(sym.name.asInstanceOf[Char])
+        //Try(sym.name.asInstanceOf[Char]).toOption
       case _ => None
     }
 
