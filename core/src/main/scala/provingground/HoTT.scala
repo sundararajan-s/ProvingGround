@@ -1284,13 +1284,14 @@ object HoTT {
     *
     */
   def lambda[U <: Term with Subs[U], V <: Term with Subs[V]](variable: U)(
-      value: V): FuncLike[U, V] = {
-    // val newvar = variable.newobj
-    // if (value.typ dependsOn variable)
-    //   Lambda(newvar, value.replace(variable, newvar))
-    // else LambdaFixed(newvar, value.replace(variable, newvar))
-    LambdaFixed(variable, value)
-  }
+      value: V): FuncLike[U, V] =
+        if (isVar(variable)) Lambda(variable, value)
+        else {
+            val newvar = variable.newobj
+            if (value.typ dependsOn variable)
+            Lambda(newvar, value.replace(variable, newvar))
+            else LambdaFixed(newvar, value.replace(variable, newvar))
+          }
 
   def lambda[U <: Term with Subs[U], V <: Term with Subs[V]](
       variable: TypedTerm[U])(value: TypedTerm[V]): FuncLike[U, V] = {
@@ -1305,10 +1306,10 @@ object HoTT {
 
   def lmbda[U <: Term with Subs[U], V <: Term with Subs[V]](
       variable: TypedTerm[U])(value: TypedTerm[V]): Func[U, V] = {
-    // require(
-    //     value.typ.indepOf(variable.term),
-    //     s"lmbda returns function type but value $value has type ${value.typ} depending on variable $variable; you may wish to use lambda instead"
-    // )
+    require(
+        value.typ.indepOf(variable.term),
+        s"lmbda returns function type but value $value has type ${value.typ} depending on variable $variable; you may wish to use lambda instead"
+    )
     val newvar = variable.term.newobj
     LambdaTypedFixed(variable.replace(variable.term, newvar),
                      value.replace(variable.term, newvar))
@@ -1326,16 +1327,17 @@ object HoTT {
     */
   def lmbda[U <: Term with Subs[U], V <: Term with Subs[V]](variable: U)(
       value: V): Func[U, V] = {
-    // require(
-    //     value.typ.indepOf(variable),
-    //     s"lmbda returns function type but value $value has type ${value.typ} depending on variable $variable; you may wish to use lambda instead"
-    // )
-    // val newvar = variable.newobj
+    require(
+        value.typ.indepOf(variable),
+        s"lmbda returns function type but value $value has type ${value.typ} depending on variable $variable; you may wish to use lambda instead"
+    )
+    if (isVar(variable)) LambdaFixed(variable, value)
+    else {
+    val newvar = variable.newobj
 //    LambdaTypedFixed(newvar.typed, value.replace(variable, newvar).typed)
-    // LambdaFixed(newvar, value.replace(variable, newvar))
-    LambdaFixed(variable, value)
+    LambdaFixed(newvar, value.replace(variable, newvar))
   }
-
+}
   def id[U <: Term with Subs[U]](typ: Typ[U]) = {
     val x = typ.Var
     lmbda(x)(x)
@@ -1809,8 +1811,8 @@ object HoTT {
   implicit class RichTerm[U <: Term with Subs[U]](term: U) {
 
     def =:=(rhs: U) = {
-      // require(term.typ == rhs.typ,
-      //         "mismatched types for equality " + term.typ + " and " + rhs.typ)
+      require(term.typ == rhs.typ,
+              "mismatched types for equality " + term.typ + " and " + rhs.typ)
       IdentityTyp(term.typ.asInstanceOf[Typ[U]], term, rhs)
     }
 
@@ -2207,8 +2209,7 @@ object HoTT {
   /** Helper for symbol factory */
   def usedChars(s: Traversable[Term]): Traversable[Char] = {
     def charOpt(obj: Term): Option[Char] = obj match {
-      case sym: Symbolic => Some(sym.name.asInstanceOf[Char])
-        //Try(sym.name.asInstanceOf[Char]).toOption
+      case sym: Symbolic => Try(sym.name.asInstanceOf[Char]).toOption
       case _ => None
     }
 
