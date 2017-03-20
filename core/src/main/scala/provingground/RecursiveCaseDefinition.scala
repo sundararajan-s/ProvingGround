@@ -35,6 +35,8 @@ object RecursiveDefinition {
     def caseFn(f: => Func[H, C])(arg: H): Option[C] = None
   }
 
+  var crash = false
+
   case class DataCons[
       H <: Term with Subs[H], C <: Term with Subs[C], D <: Term with Subs[D]](
       data: D,
@@ -51,7 +53,11 @@ object RecursiveDefinition {
     def newobj = DataCons(data.newobj, defn, tail)
 
     def subs(x: Term, y: Term) =
-      DataCons(data.replace(x, y), defn, tail.subs(x, y))
+      {val result =  DataCons(data.replace(x, y), defn, tail.subs(x, y))
+        if (crash && data.replace(x, y) != data)
+          throw new IllegalArgumentException(s"Attempting to substitute $x by $y in $data getting ${data.replace(x, y)}")
+        result
+      }
 
     def caseFn(f: => Func[H, C])(arg: H): Option[C] =
       defn(data)(f)(arg) orElse (tail.caseFn(f)(arg))
