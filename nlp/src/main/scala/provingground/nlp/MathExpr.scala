@@ -309,6 +309,7 @@ object MathExpr {
       case "the"                  => The
       case "some"                 => Some
       case "every"                => Every
+      case "each"                => Every
       case "all"                  => Every
       case "no"                   => No
       case "any"                  => Every
