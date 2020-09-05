@@ -1,19 +1,10 @@
 package provingground.translation
-import provingground._
-
-import edu.stanford.nlp.trees.Tree
-
-import PennTrees._
-
-import translation._
-
-import Functors._
-
-import Translator.Pattern
-
 import cats._
-
 import cats.implicits._
+import edu.stanford.nlp.trees.Tree
+import provingground.translation.Functors._
+import provingground.translation.PennTrees._
+import provingground.translation.Translator.Pattern
 
 // import shapeless.{:: => :::, Id => IdS, _}
 
@@ -539,6 +530,21 @@ object TreePatterns {
         init.filter(_.value != ",") :+ last
     })
 
+  object ConjunctJJPP
+    extends Pattern.Partial[Tree, Vector]({
+      case Node(
+      "ADJP",
+      init :+ Node("CC", Vector(Leaf("and"))) :+ last
+      ) => init.filter(_.value != ",") :+ last
+    })
+
+  object DisjunctJJPP
+    extends Pattern.Partial[Tree, Vector]({
+      case Node(
+      "ADJP",
+      init :+ Node("CC", Vector(Leaf("or"))) :+ last
+      ) => init.filter(_.value != ",") :+ last
+    })
 
   object Iff
       extends Pattern.Partial[Tree, II]({
@@ -789,6 +795,9 @@ object TreeToMath {
 
   val orS: Translator.Junction[Tree, MathExpr, Vector] = TreePatterns.DisjunctSP.>>>[MathExpr](MathExpr.DisjunctSP(_))
 
+  val andJJPP: Translator.Junction[Tree, MathExpr, Vector] = TreePatterns.ConjunctJJPP.>>>[MathExpr](MathExpr.ConjunctJJPP(_))
+
+  val orJJPP: Translator.Junction[Tree, MathExpr, Vector] = TreePatterns.DisjunctJJPP.>>>[MathExpr](MathExpr.DisjunctJJPP(_))
 
   val iff: Translator.Junction[Tree, MathExpr, II] =
     TreePatterns.Iff.>>>[MathExpr]({ case (x, y) => MathExpr.Iff(x, y) })
@@ -846,7 +855,8 @@ object TreeToMath {
       prep || npvp || verbObj || verbAdj || verbNegObj || verbNegAdj || // verbIf ||
       existsSP || exists || jjpp || qp ||
       verbpp || negvp || it || they || which || dpWhich || dpPpWhich || dpBase || dpQuant || dpBaseQuant || dpBaseZero ||
-      dpBaseQuantZero || and || or || andS || orS || dropRoot || dropNP || purge || iff || dropThen || innerIf
+      dpBaseQuantZero || and || or || andS || orS || andJJPP || orJJPP || dropRoot || dropNP ||
+      purge || iff || dropThen || innerIf
 
   val mathExprTree
     : Translator.OrElse[Tree, MathExpr] = mathExpr || FormalExpr.translator

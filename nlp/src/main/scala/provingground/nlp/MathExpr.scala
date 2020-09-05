@@ -293,6 +293,8 @@ object MathExpr {
 
     case object This extends Determiner
 
+    case object Both extends Determiner
+
     case class Card(s: String) extends Determiner {
       override def toString = s"Card($tq$s$tq)"
     }
@@ -301,7 +303,7 @@ object MathExpr {
       implicit def rw: RW[Card] = macroRW
     }
 
-    def apply(s: String) = s.toLowerCase match {
+    def apply(s: String):Determiner = s.toLowerCase match {
       case "a"                    => A
       case "an"                   => A
       case "the"                  => The
@@ -311,7 +313,10 @@ object MathExpr {
       case "no"                   => No
       case "any"                  => Every
       case "this"                 => This
+      case "these"                => This
       case "that"                 => That
+      case "those"                => That
+      case "both"                 => Both
       case s if s.startsWith("#") => Card(s.drop(1))
     }
   }
@@ -350,6 +355,24 @@ object MathExpr {
 
   object JJPP {
     implicit def rw: RW[JJPP] = macroRW
+  }
+
+  /**
+    * An adjectival phrase that is a conjuction (and) of adjectival phrases.
+    */
+  case class ConjunctJJPP(nps: Vector[NounPhrase]) extends NounPhrase
+
+  object ConjunctJJPP {
+    implicit def rw: RW[ConjunctJJPP] = macroRW
+  }
+
+  /**
+    * An adjectival phrase  that is a disjunction (or) of adjectival phrases.
+    */
+  case class DisjunctJJPP(nps: Vector[NounPhrase]) extends NounPhrase
+
+  object DisjunctJJPP {
+    implicit def rw: RW[DisjunctJJPP] = macroRW
   }
 
   /**
