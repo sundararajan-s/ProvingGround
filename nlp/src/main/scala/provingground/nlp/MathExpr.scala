@@ -20,7 +20,7 @@ import ujson._
   * At the upper level are sentential phrases. We typically start with a tree that encodes a sentential phrase.
   *
   */
-sealed trait MathExpr
+sealed trait MathExpr //extends MathText
 
 /**
   * Expression in a language to represent terms in HoTT and
@@ -678,15 +678,25 @@ object Raw {
   implicit def rw: RW[Raw] = macroRW
 }
 
-sealed trait MathText
+sealed trait MathText extends MathExpr
 
 object MathText {
+
+  implicit def rw: RW[MathText] = macroRW
 
   import MathExpr._
 
   case class Assert(assertion: SententialPhrase) extends MathText
 
+  object Assert {
+    implicit def rw: RW[Assert] = macroRW
+  }
+
   case class Assume(assumption: SententialPhrase) extends MathText
+
+  object Assume {
+    implicit def rw: RW[Assume] = macroRW
+  }
 
   case class BiImplicationDefiniendumSP(definiendum: SententialPhrase)
       extends SententialPhrase

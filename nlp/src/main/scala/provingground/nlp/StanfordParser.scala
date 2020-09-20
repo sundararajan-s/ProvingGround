@@ -1,20 +1,18 @@
 package provingground.translation
-import provingground._
-import edu.stanford.nlp.ling._
-import edu.stanford.nlp.process._
-import edu.stanford.nlp.trees._
-import edu.stanford.nlp.parser.lexparser._
-import edu.stanford.nlp.process.PTBTokenizer
-import edu.stanford.nlp.process.CoreLabelTokenFactory
-import edu.stanford.nlp.tagger.maxent._
 import java.io._
 import java.util
 
-import scala.jdk.CollectionConverters._
-import scala.collection.mutable
-import scala.util.matching.Regex
+import edu.stanford.nlp.ling._
+import edu.stanford.nlp.parser.lexparser._
+import edu.stanford.nlp.process.{CoreLabelTokenFactory, PTBTokenizer, _}
+import edu.stanford.nlp.tagger.maxent._
+import edu.stanford.nlp.trees._
+import provingground._
+import provingground.interface.WordNet
 
-import interface.WordNet
+import scala.collection.mutable
+import scala.jdk.CollectionConverters._
+import scala.util.matching.Regex
 
 /**
   * Interface to the Stanford parser, handling (inline) TeX by separating tokenizing and POS tagging from parsing.
@@ -22,33 +20,40 @@ import interface.WordNet
   */
 object StanfordParser {
   val lp: LexicalizedParser = LexicalizedParser.loadModel(
-    "edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz")
+    "edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz"
+  )
 
   lazy val tlp: PennTreebankLanguagePack = new PennTreebankLanguagePack
 
   lazy val gsf: GrammaticalStructureFactory = tlp.grammaticalStructureFactory
 
   val tagger: MaxentTagger = new MaxentTagger(
-    "edu/stanford/nlp/models/pos-tagger/english-left3words/english-left3words-distsim.tagger")
+    "edu/stanford/nlp/models/pos-tagger/english-left3words/english-left3words-distsim.tagger"
+  )
 
-  val tokenizerFactory: TokenizerFactory[CoreLabel] = PTBTokenizer.factory(new CoreLabelTokenFactory(), "")
+  val tokenizerFactory: TokenizerFactory[CoreLabel] =
+    PTBTokenizer.factory(new CoreLabelTokenFactory(), "")
 
   def coreLabels(s: String): util.List[CoreLabel] =
     tokenizerFactory.getTokenizer(new StringReader(s)).tokenize
 
-  def words(s: String): mutable.Buffer[Word] = coreLabels(s).asScala map ((c) => new Word(c.word))
+  def words(s: String): mutable.Buffer[Word] =
+    coreLabels(s).asScala map ((c) => new Word(c.word))
 
   def parse(s: String): Tree = lp(tagger(words(s).asJava))
 
-  def texInline(s: String): Regex.MatchIterator = """\$[^\$]+\$""".r.findAllIn(s)
+  def texInline(s: String): Regex.MatchIterator =
+    """\$[^\$]+\$""".r.findAllIn(s)
 
-  def texDisplay(s: String): Regex.MatchIterator = """\$\$[^\$]+\$\$""".r.findAllIn(s)
+  def texDisplay(s: String): Regex.MatchIterator =
+    """\$\$[^\$]+\$\$""".r.findAllIn(s)
 
   def reTag(word: String, tag: String)(tw: TaggedWord): TaggedWord =
     if (tw.word.toLowerCase == word) new TaggedWord(tw.word, tag) else tw
 
   def mergeTag(mwe: Vector[String], tag: String)(
-      tws: Vector[TaggedWord]): Vector[TaggedWord] =
+      tws: Vector[TaggedWord]
+  ): Vector[TaggedWord] =
     if (tws.take(mwe.size).map(_.word.toLowerCase) == mwe)
       (new TaggedWord(tws.take(mwe.size).map(_.word).mkString(" "), tag)) +: tws
         .drop(mwe.size)
@@ -59,7 +64,8 @@ object StanfordParser {
       }
 
   def mergeSubs(mwe: Vector[String], tw: TaggedWord)(
-      tws: Vector[TaggedWord]): Vector[TaggedWord] =
+      tws: Vector[TaggedWord]
+  ): Vector[TaggedWord] =
     if (tws.take(mwe.size).map(_.word.toLowerCase) == mwe)
       tw +: tws.drop(mwe.size)
     else
@@ -68,22 +74,26 @@ object StanfordParser {
         case x +: ys  => x +: mergeSubs(mwe, tw)(ys)
       }
 
-  def wordNetTags(tws: Vector[TaggedWord], depth : Int) : Vector[Vector[TaggedWord]] =
+  def wordNetTags(
+      tws: Vector[TaggedWord],
+      depth: Int
+  ): Vector[Vector[TaggedWord]] =
     tws match {
       case Vector() => Vector(Vector())
       case x +: ys =>
-        val cdTag = if (x.word.startsWith("$")) Vector("CD") else Vector()
+        val cdTag                    = if (x.word.startsWith("$")) Vector("CD") else Vector()
         def thinTags: Vector[String] = x.tag +: cdTag
-        def fatTags: Vector[String] = (x.tag +: WordNet.posTags(x.word)) ++ cdTag
+        def fatTags: Vector[String] =
+          (x.tag +: WordNet.posTags(x.word)) ++ cdTag
         def thinTailed: Vector[Vector[TaggedWord]] =
           for {
-          tag <- fatTags
-          tail <- wordNetTags(ys, depth - 1)
-          tw = new TaggedWord(x.word, tag)
-        } yield tw +: tail
+            tag  <- fatTags
+            tail <- wordNetTags(ys, depth - 1)
+            tw = new TaggedWord(x.word, tag)
+          } yield tw +: tail
         def fatTailed =
           for {
-            tag <- thinTags
+            tag  <- thinTags
             tail <- wordNetTags(ys, depth)
             tw = new TaggedWord(x.word, tag)
           } yield tw +: tail
@@ -97,7 +107,7 @@ object StanfordParser {
       // , mweTags: Vector[(Vector[String], String)] = Vector()
   ) {
     val raw: String = preraw
-      // .replace("such that", "so that")
+    // .replace("such that", "so that")
     // .replace("which", "where it") // useful for contituency parsing
     // .replace("that", "where it")
 
@@ -105,7 +115,9 @@ object StanfordParser {
       case (w, n) => (s"TeXInline$n", w)
     }).toMap
 
-    lazy val deTeXed: String = texMap.foldRight(raw) { case ((l, w), s) => s.replace(w, l) }
+    lazy val deTeXed: String = texMap.foldRight(raw) {
+      case ((l, w), s) => s.replace(w, l)
+    }
 
     lazy val deTeXWords: mutable.Buffer[Word] = words(deTeXed)
 
@@ -155,21 +167,41 @@ object StanfordParser {
   val baseWordTags =
     Vector("iff" -> "IN", "modulo" -> "IN")
 
-  val baseMweSubs =
-    Vector(Vector("if", "and", "only", "if") -> new TaggedWord("iff", "IN"),
-           Vector("such", "that")            -> new TaggedWord("with", "IN"))
+  val assumptionTriggers: Vector[(Vector[String], TaggedWord)] =
+    Vector(
+      Vector("assume") -> new TaggedWord("assume", "ASTG"),
+      Vector("assume", "that") -> new TaggedWord("assume", "ASTG"),
+      Vector("now", "assume", "that") -> new TaggedWord("assume", "ASTG"),
+      Vector("now", "assume", "for", "a", "contradiction", "that") -> new TaggedWord("assume", "ASTG"),
+      Vector("assume", "for", "a", "contradiction", "that") -> new TaggedWord("assume", "ASTG"),
+      Vector("suppose", "that") -> new TaggedWord("assume", "ASTG"),
+      Vector("now", "suppose", "that") -> new TaggedWord("assume", "ASTG")
+//      Vector("consider") -> new TaggedWord("assume", "ASTG"),
+//      Vector("now", "consider") -> new TaggedWord("assume", "ASTG"),
+//      Vector("let") -> new TaggedWord("assume", "ASTG"),
+//      Vector("now", "let") -> new TaggedWord("assume", "ASTG")
+    )
 
-  def texParse(s: String,
-               wordTags: Vector[(String, String)] = baseWordTags,
-               // mweTags: Vector[(Vector[String], String)] = Vector(),
-               mweSubs: Vector[(Vector[String], TaggedWord)] = baseMweSubs): Tree =
+  val baseMweSubs: Vector[(Vector[String], TaggedWord)] =
+    Vector(
+      Vector("if", "and", "only", "if") -> new TaggedWord("iff", "IN"),
+      Vector("such", "that")            -> new TaggedWord("with", "IN")
+    ) ++ assumptionTriggers
+
+  def texParse(
+      s: String,
+      wordTags: Vector[(String, String)] = baseWordTags,
+      // mweTags: Vector[(Vector[String], String)] = Vector(),
+      mweSubs: Vector[(Vector[String], TaggedWord)] = baseMweSubs
+  ): Tree =
     TeXParsed(s, wordTags, mweSubs).parsed
 
-  def proseTree(s: String,
-                wordTags: Vector[(String, String)] = baseWordTags,
-                // mweTags: Vector[(Vector[String], String)] = Vector(),
-                mweSubs: Vector[(Vector[String], TaggedWord)] = baseMweSubs)
-    : NlpProse.ProseTree =
+  def proseTree(
+      s: String,
+      wordTags: Vector[(String, String)] = baseWordTags,
+      // mweTags: Vector[(Vector[String], String)] = Vector(),
+      mweSubs: Vector[(Vector[String], TaggedWord)] = baseMweSubs
+  ): NlpProse.ProseTree =
     TeXParsed(s, wordTags, mweSubs).proseTree
 
 }

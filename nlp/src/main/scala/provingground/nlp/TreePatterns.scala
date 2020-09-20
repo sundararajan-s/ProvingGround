@@ -546,6 +546,14 @@ object TreePatterns {
       ) => init.filter(_.value != ",") :+ last
     })
 
+  object Assumption
+    extends Pattern.Partial[Tree, Id]({
+      case Node(
+      "SBAR",
+      Node("ASTG", Vector(Leaf("assume"))) +: assumption +: _
+      ) => assumption
+    })
+
   object Iff
       extends Pattern.Partial[Tree, II]({
         case Node(
@@ -833,6 +841,9 @@ object TreeToMath {
       case (x, y) => MathExpr.IfThen(x, y)
     })
 
+  val assume: Translator.Junction[Tree, MathExpr, Id] =
+    TreePatterns.Assumption.>>>[MathExpr](x => MathText.Assume(x))
+
   val negvp: Translator.Junction[Tree, MathExpr, Id] = TreePatterns.NegVP.>>>[MathExpr](MathExpr.NegVP(_))
 
   val iffP: Translator.Junction[Tree, MathExpr, Vector] = TreePatterns.phrase("_ iff _").>>>[MathExpr] {
@@ -851,7 +862,7 @@ object TreeToMath {
   }
 
   val mathExpr: Translator.OrElse[Tree, MathExpr] =
-    fmla || ifThen || addPP || addST || addPPST || nn || vb || jj || pp || iffP ||
+    fmla || ifThen || assume || addPP || addST || addPPST || nn || vb || jj || pp || iffP ||
       prep || npvp || verbObj || verbAdj || verbNegObj || verbNegAdj || // verbIf ||
       existsSP || exists || jjpp || qp ||
       verbpp || negvp || it || they || which || dpWhich || dpPpWhich || dpBase || dpQuant || dpBaseQuant || dpBaseZero ||
