@@ -169,17 +169,17 @@ object StanfordParser {
 
   val assumptionTriggers: Vector[(Vector[String], TaggedWord)] =
     Vector(
-      Vector("assume") -> new TaggedWord("assume", "ASTG"),
-      Vector("assume", "that") -> new TaggedWord("assume", "ASTG"),
-      Vector("now", "assume", "that") -> new TaggedWord("assume", "ASTG"),
-      Vector("now", "assume", "for", "a", "contradiction", "that") -> new TaggedWord("assume", "ASTG"),
-      Vector("assume", "for", "a", "contradiction", "that") -> new TaggedWord("assume", "ASTG"),
-      Vector("suppose", "that") -> new TaggedWord("assume", "ASTG"),
-      Vector("now", "suppose", "that") -> new TaggedWord("assume", "ASTG")
-//      Vector("consider") -> new TaggedWord("assume", "ASTG"),
-//      Vector("now", "consider") -> new TaggedWord("assume", "ASTG"),
-//      Vector("let") -> new TaggedWord("assume", "ASTG"),
-//      Vector("now", "let") -> new TaggedWord("assume", "ASTG")
+      Vector("assume") -> new TaggedWord("assume", "VB"),
+      Vector("assume", "that") -> new TaggedWord("assume", "VB"),
+      Vector("now", "assume", "that") -> new TaggedWord("assume", "VB"),
+      Vector("now", "assume", "for", "a", "contradiction", "that") -> new TaggedWord("assume", "VB"),
+      Vector("assume", "for", "a", "contradiction", "that") -> new TaggedWord("assume", "VB"),
+      Vector("suppose", "that") -> new TaggedWord("assume", "VB"),
+      Vector("now", "suppose", "that") -> new TaggedWord("assume", "VB")
+//      Vector("consider") -> new TaggedWord("assume", "VB"),
+//      Vector("now", "consider") -> new TaggedWord("assume", "VB"),
+//      Vector("let") -> new TaggedWord("assume", "VB"),
+//      Vector("now", "let") -> new TaggedWord("assume", "VB")
     )
 
   val baseMweSubs: Vector[(Vector[String], TaggedWord)] =

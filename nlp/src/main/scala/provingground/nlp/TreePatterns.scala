@@ -549,8 +549,8 @@ object TreePatterns {
   object Assumption
     extends Pattern.Partial[Tree, Id]({
       case Node(
-      "SBAR",
-      Node("ASTG", Vector(Leaf("assume"))) +: assumption +: _
+      "S",
+      Node("VP",Vector(Node("VB",Vector(Leaf("assume"))), Node("SBAR", Vector(assumption)))) +: _
       ) => assumption
     })
 
