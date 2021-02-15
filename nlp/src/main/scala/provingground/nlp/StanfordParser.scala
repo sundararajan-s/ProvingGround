@@ -1,7 +1,4 @@
 package provingground.translation
-import java.io._
-import java.util
-
 import edu.stanford.nlp.ling._
 import edu.stanford.nlp.parser.lexparser._
 import edu.stanford.nlp.process.{CoreLabelTokenFactory, PTBTokenizer, _}
@@ -10,6 +7,8 @@ import edu.stanford.nlp.trees._
 import provingground._
 import provingground.interface.WordNet
 
+import java.io._
+import java.util
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 import scala.util.matching.Regex
@@ -50,6 +49,20 @@ object StanfordParser {
 
   def reTag(word: String, tag: String)(tw: TaggedWord): TaggedWord =
     if (tw.word.toLowerCase == word) new TaggedWord(tw.word, tag) else tw
+
+  // This method replaces a set of inline TeX expressions with the the TeX expression concatenated with "is true"
+  def texPhraseReplacer(
+      sentence: String,
+      texExpressionIsPhrase: Iterable[Boolean]
+  ): String = {
+    texExpressionIsPhrase.zipWithIndex.foldLeft(sentence) {
+      case (x, (b, i)) =>
+        if (b)
+          x.replace(s"TeXInline$i", s"TeXInline$i is true")
+        else
+          x
+    }
+  }
 
   def mergeTag(mwe: Vector[String], tag: String)(
       tws: Vector[TaggedWord]
@@ -103,7 +116,8 @@ object StanfordParser {
   case class TeXParsed(
       preraw: String,
       wordTags: Vector[(String, String)] = baseWordTags,
-      mweSubs: Vector[(Vector[String], TaggedWord)] = baseMweSubs
+      mweSubs: Vector[(Vector[String], TaggedWord)] = baseMweSubs,
+      texExpressionIsPhrase: Array[Boolean] = Array()
       // , mweTags: Vector[(Vector[String], String)] = Vector()
   ) {
     val raw: String = preraw
@@ -119,7 +133,9 @@ object StanfordParser {
       case ((l, w), s) => s.replace(w, l)
     }
 
-    lazy val deTeXWords: mutable.Buffer[Word] = words(deTeXed)
+    lazy val deTeXedWithReplacements:String = texPhraseReplacer(deTeXed, texExpressionIsPhrase)
+
+    lazy val deTeXWords: mutable.Buffer[Word] = words(deTeXedWithReplacements)
 
     lazy val deTeXTagged: util.List[TaggedWord] = tagger(deTeXWords.asJava)
 
@@ -157,7 +173,7 @@ object StanfordParser {
     def token(w: IndexedWord) = Token(w.word, w.index)
 
     lazy val typedDeps: mutable.Buffer[DepRel] =
-      tdl.asScala.map { (x) =>
+      tdl.asScala.map { x =>
         DepRel(token(x.gov), token(x.dep), x.reln.toString)
       }
 
@@ -169,12 +185,18 @@ object StanfordParser {
 
   val assumptionTriggers: Vector[(Vector[String], TaggedWord)] =
     Vector(
-      Vector("assume") -> new TaggedWord("assume", "VB"),
-      Vector("assume", "that") -> new TaggedWord("assume", "VB"),
+      Vector("assume")                -> new TaggedWord("assume", "VB"),
+      Vector("assume", "that")        -> new TaggedWord("assume", "VB"),
       Vector("now", "assume", "that") -> new TaggedWord("assume", "VB"),
-      Vector("now", "assume", "for", "a", "contradiction", "that") -> new TaggedWord("assume", "VB"),
-      Vector("assume", "for", "a", "contradiction", "that") -> new TaggedWord("assume", "VB"),
-      Vector("suppose", "that") -> new TaggedWord("assume", "VB"),
+      Vector("now", "assume", "for", "a", "contradiction", "that") -> new TaggedWord(
+        "assume",
+        "VB"
+      ),
+      Vector("assume", "for", "a", "contradiction", "that") -> new TaggedWord(
+        "assume",
+        "VB"
+      ),
+      Vector("suppose", "that")        -> new TaggedWord("assume", "VB"),
       Vector("now", "suppose", "that") -> new TaggedWord("assume", "VB")
 //      Vector("consider") -> new TaggedWord("assume", "VB"),
 //      Vector("now", "consider") -> new TaggedWord("assume", "VB"),
